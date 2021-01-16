@@ -17,6 +17,8 @@ namespace AnimacionesWF
         public int TipoY;
         public int TipoX;
 
+        public int HiddenStart; //El control es reposicionado de forma que este escondido desde la vista actual del formulario
+
         private bool finalizada;
 
         //Valores calculaos
@@ -38,6 +40,29 @@ namespace AnimacionesWF
         {
             //Reestablecemos valores
             finalizada = false;
+
+            if (HiddenStart != NONE) {
+                int nuevaX = control.Location.X, nuevaY = control.Location.Y;
+
+                switch (HiddenStart)
+                {
+                    case TOP:
+                        nuevaY = 0 - control.Size.Height;
+                        break;
+                    case LEFT:
+                        nuevaX = 0 - control.Size.Width;
+                        break;
+                    case RIGHT:
+                        nuevaX = control.FindForm().ClientSize.Width + control.Size.Width;
+                        break;
+                    case BOTTOM:
+                        nuevaY = control.FindForm().ClientSize.Height + control.Size.Height;
+                        break;
+                }
+
+                control.Location = new Point(nuevaX, nuevaY);
+            }
+            
 
             //Establecemos las pseudo a la pos actual
             pseudoX = control.Location.X;
@@ -95,6 +120,24 @@ namespace AnimacionesWF
         /// <param name="elemento"></param>
         public override void parseXML(XElement elemento)
         {
+            //Default
+            HiddenStart = NONE;
+
+            switch (elemento.Attribute("hiddenstart")?.Value.ToLower()) {
+                case "top":
+                    HiddenStart = TOP;
+                    break;
+                case "left":
+                    HiddenStart = LEFT;
+                    break;
+                case "right":
+                    HiddenStart = RIGHT;
+                    break;
+                case "bottom":
+                    HiddenStart = BOTTOM;
+                    break;
+            }
+
             foreach (XElement elementoHijo in elemento.Elements()) {
                 switch (elementoHijo.Name.LocalName.ToLower()) {
                     case "x":
