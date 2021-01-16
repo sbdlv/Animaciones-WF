@@ -10,7 +10,7 @@ namespace AnimacionesWF
 {
     public abstract class Paso
     {
-        public const int RELATIVO = 2, ABSOLUTO = 1, CONGELADO = 0;
+        public const int RELATIVO = 2, ABSOLUTO = 1, CONGELADO = 0, TOP = 3, BOTTOM = 4 , LEFT = 5, RIGHT = 6, NONE = -1;
         public String Signal;
         /// <summary>
         /// Cambia los datos del control
@@ -34,17 +34,30 @@ namespace AnimacionesWF
         /// <param name="nMovimientos">El nº de llamadas que tiene la animacion</param>
         /// <returns></returns>
         protected static float calcularValorPorMovimientos(int objetivo, int actual, int tipo, int nMovimientos) {
+            float final;
+
             switch (tipo)
             {
                 case CONGELADO:
                     return 0;
                 case RELATIVO:
-                    return (float) (objetivo - actual)  / nMovimientos;
+                    final = objetivo - actual;
+                    if (nMovimientos != 0) {
+                        final /= nMovimientos;
+                    }
+                    return final;
                 case ABSOLUTO:
-                    return (float) (objetivo - actual) / nMovimientos;
+                    final = objetivo - actual;
+                    if (nMovimientos != 0)
+                    {
+                        final /= nMovimientos;
+                    }
+                    return final;
                 default:
                     throw new Exception("Tipo de valor no soportado: " + tipo);
             }
+
+            
         }
 
         public abstract void parseXML(XElement elemento);
