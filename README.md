@@ -10,12 +10,14 @@ Da la posibilidad de crear animaciones para controles mediante XML.
 Los grupos definen el tiempo que van a durar mediante el atributo `ms`, que va definido en milisegundos. Todas las animaciones que esten dentro del grupo se reproduciran a la vez.
 Los atributos se definen con el tag `<key-step>`.
 ## Atributos
- - loops: El número de veces que se va a repetir dicho grupo
-    - Valores numéricos
+ - ms: El tiempo en milisegundos que va a durar la ejecución del grupo.
+ - loops: El número de veces que se va a repetir dicho grupo. Ej.: "1" repetira 1 vez más el grupo.
+ - startSignal: Invoca un evento al iniciarse el grupo/key-step. El evento enviara un String con el valor que hayamos definido en el atrbituto.
+ - endSignal: Invoca un evento al acabarse el grupo/key-step. El evento enviara un String con el valor que hayamos definido en el atrbituto.
 
  ## Ejemplos
  ```
-<key-step loops="1">
+<key-step ms="2000" loops="1" startSignal="comienzo" endSignal="final">
     <pos>
         ...
     </pos>

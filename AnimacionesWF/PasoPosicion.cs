@@ -17,7 +17,7 @@ namespace AnimacionesWF
         public int TipoY;
         public int TipoX;
 
-        public int HiddenStart; //El control es reposicionado de forma que este escondido desde la vista actual del formulario
+        public AdjustInfo adjustInfo;
 
         private bool finalizada;
 
@@ -41,28 +41,60 @@ namespace AnimacionesWF
             //Reestablecemos valores
             finalizada = false;
 
-            if (HiddenStart != NONE) {
-                int nuevaX = control.Location.X, nuevaY = control.Location.Y;
+            //Adjust
+            if (adjustInfo != null) {
+                int adjustControlX, adjustControlY, adjustParentX, adjustParentY;
 
-                switch (HiddenStart)
+
+                //Control
+                if (adjustInfo.TipoControlX == NumberType.PERCENTAGE)
                 {
-                    case TOP:
-                        nuevaY = 0 - control.Size.Height;
-                        break;
-                    case LEFT:
-                        nuevaX = 0 - control.Size.Width;
-                        break;
-                    case RIGHT:
-                        nuevaX = control.FindForm().ClientSize.Width + control.Size.Width;
-                        break;
-                    case BOTTOM:
-                        nuevaY = control.FindForm().ClientSize.Height + control.Size.Height;
-                        break;
+                    adjustControlX = control.Size.Width * adjustInfo.ControlX / 100;
+                }
+                else {
+                    adjustControlX = adjustInfo.ControlX;
                 }
 
-                control.Location = new Point(nuevaX, nuevaY);
+                if (adjustInfo.TipoControlY == NumberType.PERCENTAGE)
+                {
+                    adjustControlY = control.Size.Height * adjustInfo.ControlY / 100;
+                }
+                else
+                {
+                    adjustControlY = adjustInfo.ControlY;
+                }
+
+                //Parent
+                Size parentSize;
+
+                if (adjustInfo.adjustToForm)
+                {
+                    parentSize = control.FindForm().ClientSize;
+                }
+                else {
+                    parentSize = control.Parent.Size;
+                }
+
+                if (adjustInfo.TipoParentX == NumberType.PERCENTAGE)
+                {
+                    adjustParentX = parentSize.Width * adjustInfo.ParentX / 100;
+                }
+                else {
+                    adjustParentX = adjustInfo.ParentX;
+                }
+
+                if (adjustInfo.TipoParentY == NumberType.PERCENTAGE)
+                {
+                    adjustParentY = parentSize.Height * adjustInfo.ParentY / 100;
+                }
+                else
+                {
+                    adjustParentY = adjustInfo.ParentY;
+                }
+
+                //Adjustment
+                control.Location = new Point(adjustParentX - adjustControlX, adjustParentY - adjustControlY);
             }
-            
 
             //Establecemos las pseudo a la pos actual
             pseudoX = control.Location.X;
@@ -76,10 +108,8 @@ namespace AnimacionesWF
             sumaX = calcularValorPorMovimientos(objetivoX, control.Location.X, TipoX, nMovimientos);
             sumaY = calcularValorPorMovimientos(objetivoY, control.Location.Y, TipoY, nMovimientos);
 
-            Console.WriteLine("Suma X" + sumaX);
-            Console.WriteLine("Suma Y" + sumaY);
-
-
+            //Console.WriteLine("Suma X" + sumaX);
+            //Console.WriteLine("Suma Y" + sumaY);
         }
 
         public override bool setpForward(Control control)
@@ -101,14 +131,14 @@ namespace AnimacionesWF
             pseudoX += sumaX;
             pseudoY += sumaY;
 
-            Console.WriteLine("PseudoX: " + pseudoX);
-            Console.WriteLine("PseudoY: " + pseudoY);
+            //Console.WriteLine("PseudoX: " + pseudoX);
+            //Console.WriteLine("PseudoY: " + pseudoY);
 
             nuevaX = (int)pseudoX;
             nuevaY = (int)pseudoY;
 
             control.Location = new Point(nuevaX, nuevaY);
-            Console.WriteLine(nuevaX + "::" + nuevaY);
+            //Console.WriteLine(nuevaX + "::" + nuevaY);
 
             return false;
         }
@@ -120,24 +150,12 @@ namespace AnimacionesWF
         /// <param name="elemento"></param>
         public override void parseXML(XElement elemento)
         {
-            //Default
-            HiddenStart = NONE;
-
-            switch (elemento.Attribute("hiddenstart")?.Value.ToLower()) {
-                case "top":
-                    HiddenStart = TOP;
-                    break;
-                case "left":
-                    HiddenStart = LEFT;
-                    break;
-                case "right":
-                    HiddenStart = RIGHT;
-                    break;
-                case "bottom":
-                    HiddenStart = BOTTOM;
-                    break;
+            //Attr
+            if (elemento.Attribute("adjust") != null) {
+                adjustInfo = new AdjustInfo(elemento.Attribute("adjust").Value);
             }
 
+            //Childs
             foreach (XElement elementoHijo in elemento.Elements()) {
                 switch (elementoHijo.Name.LocalName.ToLower()) {
                     case "x":
@@ -151,6 +169,40 @@ namespace AnimacionesWF
                     default:
                         throw new Exception("ChildNode no soportado " + elementoHijo.Name.LocalName);
                 }
+            }
+        }
+
+        public class AdjustInfo {
+            public int ControlX, ControlY, ParentX, ParentY;
+            public NumberType TipoControlX, TipoControlY, TipoParentX, TipoParentY;
+            public bool adjustToForm;
+
+            public AdjustInfo(String adjust) {
+                String[] adjustParams = adjust.Split(' ');
+
+                TipoControlX = comprobarTipoNumero(adjustParams[0]);
+                if (TipoControlX == NumberType.PERCENTAGE) {
+                    ControlX = Int32.Parse(adjustParams[0].Substring(0, adjustParams[0].Length - 1));
+                }
+
+                TipoControlY = comprobarTipoNumero(adjustParams[1]);
+                if (TipoControlY == NumberType.PERCENTAGE)
+                {
+                    ControlY = Int32.Parse(adjustParams[1].Substring(0, adjustParams[1].Length - 1));
+                }
+
+                TipoParentX = comprobarTipoNumero(adjustParams[2]);
+                if (TipoParentX == NumberType.PERCENTAGE)
+                {
+                    ParentX = Int32.Parse(adjustParams[2].Substring(0, adjustParams[2].Length - 1));
+                }
+
+                TipoParentY = comprobarTipoNumero(adjustParams[3]);
+                if (TipoParentY == NumberType.PERCENTAGE)
+                {
+                    ParentY = Int32.Parse(adjustParams[3].Substring(0, adjustParams[3].Length - 1));
+                }
+                adjustToForm = adjustParams[4].ToLower().Equals("form");
             }
         }
     }

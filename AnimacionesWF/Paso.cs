@@ -86,5 +86,18 @@ namespace AnimacionesWF
 
             return ABSOLUTO;
         }
+
+        protected static NumberType comprobarTipoNumero(String numero) {
+            if(numero[numero.Length - 1] == '%'){
+                return NumberType.PERCENTAGE;
+            }
+
+            return NumberType.INTEGER;
+        }
+
+        public enum NumberType { 
+            INTEGER,
+            PERCENTAGE
+        }
     }
 }
