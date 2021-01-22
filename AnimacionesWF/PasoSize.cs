@@ -40,7 +40,7 @@ namespace AnimacionesWF
             CentrarX = false;
             CentrarY = false;
 
-            switch (elemento.Attribute("modo")?.Value.ToLower()) {
+            switch (elemento.Attribute("mode")?.Value.ToLower()) {
                 case "center":
                     CentrarX = true;
                     CentrarY = true;
@@ -87,7 +87,7 @@ namespace AnimacionesWF
 
         public override bool setpForward(Control control)
         {
-            int nuevoWidth, nuevoHeight, ajusteX = control.Location.X, ajusteY = control.Location.Y;
+            int nuevoWidth, nuevoHeight, ajusteX = control.Location.X, ajusteY = control.Location.Y, fixedSumaW = (int) sumaWidth, fixedSumaH = (int) sumaHeight;
             if (finalizada) {
                 return finalizada;
             }
@@ -99,25 +99,60 @@ namespace AnimacionesWF
                 return finalizada;
             }
 
-            pseudoWidth += sumaWidth;
-            pseudoHeight+= sumaHeight;
 
-            nuevoWidth = (int)pseudoWidth;
+
+
+            //Centrar
+            
             if (CentrarX) {
-                ajusteX += (int) -sumaWidth /2;
+                if (sumaWidth % 2 != 0)
+                {
+                    fixedSumaW--;
+                    
+                }
+                
             }
 
-            nuevoHeight = (int)pseudoHeight;
-            if (CentrarY)
+            Console.WriteLine("Dif pseduo - actual: " + (pseudoWidth - control.Size.Width));
+
+            if (pseudoWidth - control.Size.Width >= 1)
             {
-                ajusteY += (int)-sumaHeight /2;
+                nuevoWidth = (int)(pseudoWidth + sumaWidth);
+                ajusteX -= (int)(sumaWidth/ 2);
             }
+            else
+            {
+                ajusteX -= fixedSumaW / 2;
+                nuevoWidth = (int)Math.Floor(pseudoWidth) + fixedSumaW;
+
+            }
+
+
+
+
+
+            //Centrar
+            if (CentrarY) { 
+                if (sumaHeight % 2 != 0) {
+                    fixedSumaH--;
+                }
+                ajusteY -= fixedSumaH / 2;
+            }
+            nuevoHeight = (int)Math.Floor(pseudoHeight) + fixedSumaH;
+
+
+
+
 
             control.Size = new System.Drawing.Size(nuevoWidth, nuevoHeight);
 
+            //Centrar
             if (CentrarX || CentrarY) {
                 control.Location = new System.Drawing.Point(ajusteX, ajusteY);
             }
+
+            pseudoWidth += sumaWidth;
+            pseudoHeight += sumaHeight;
 
             return false;
         }

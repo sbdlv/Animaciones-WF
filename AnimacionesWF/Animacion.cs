@@ -40,8 +40,6 @@ namespace AnimacionesWF
             
         }
 
-
-
         public Animacion(XElement elemento, Control control): this()
         {
             this.Timer = new Timer();
@@ -64,6 +62,30 @@ namespace AnimacionesWF
             }
         }
 
+        public Animacion(XElement elemento) : this()
+        {
+            this.Timer = new Timer();
+            this.Pasos = new List<GrupoPasos>();
+            this.Timer.Tick += Tick;
+            Timer.Interval = TIMER_INTERVAL_DEFAULT;
+            this.control = control;
+
+            //Parse XML
+            Nombre = elemento.Attribute("name") == null ? "undefined" : elemento.Attribute("name").Value;
+
+            foreach (XElement elementoHijo in elemento.Elements())
+            {
+                switch (elementoHijo.Name.LocalName)
+                {
+                    case "key-step":
+                        Pasos.Add(new GrupoPasos(elementoHijo));
+                        break;
+                    default:
+                        throw new Exception("Etiqueta no soportada " + elementoHijo.Name);
+                }
+            }
+        }
+
         public void Reproducir(Control control)
         {
             if (isPlaying)
@@ -72,6 +94,7 @@ namespace AnimacionesWF
             }
             else {
                 isPlaying = true;
+                this.control = control;
 
                 Pasos[pasosReproducidos].prepare(control, Timer.Interval);
                 sendSignal(Pasos[pasosReproducidos].StartSignal, OnStartSignal);
