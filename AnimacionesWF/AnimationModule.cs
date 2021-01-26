@@ -8,10 +8,13 @@ using System.Xml.Linq;
 
 namespace AnimacionesWF
 {
-    public abstract class Paso
+    [XMLTagName(null)]
+    public abstract class AnimationModule
     {
-        public const int RELATIVO = 2, ABSOLUTO = 1, CONGELADO = 0, TOP = 3, BOTTOM = 4 , LEFT = 5, RIGHT = 6, NONE = -1;
-        public String Signal;
+
+        public AnimationModule(XElement root) { 
+        }
+
         /// <summary>
         /// Cambia los datos del control
         /// </summary>
@@ -33,20 +36,20 @@ namespace AnimacionesWF
         /// <param name="tipo">El tipo de valor</param>
         /// <param name="nMovimientos">El nº de llamadas que tiene la animacion</param>
         /// <returns></returns>
-        protected static float calcularValorPorMovimientos(int objetivo, int actual, int tipo, int nMovimientos) {
+        protected static float calcularValorPorMovimientos(int objetivo, int actual, ValueType tipo, int nMovimientos) {
             float final;
 
             switch (tipo)
             {
-                case CONGELADO:
+                case ValueType.FROZEN:
                     return 0;
-                case RELATIVO:
+                case ValueType.RELATIVE:
                     final = objetivo - actual;
                     if (nMovimientos != 0) {
                         final /= nMovimientos;
                     }
                     return final;
-                case ABSOLUTO:
+                case ValueType.ABSOLUTE:
                     final = objetivo - actual;
                     if (nMovimientos != 0)
                     {
@@ -56,48 +59,47 @@ namespace AnimacionesWF
                 default:
                     throw new Exception("Tipo de valor no soportado: " + tipo);
             }
-
-            
         }
 
-        public abstract void parseXML(XElement elemento);
-
-        protected static int aplicarValor(int valor, int tipoValor, int actual) {
+        protected static int aplicarValor(int valor, ValueType tipoValor, int actual) {
             switch (tipoValor) {
-                case CONGELADO:
+                case ValueType.FROZEN:
                     return actual;
-                case ABSOLUTO:
+                case ValueType.ABSOLUTE:
                     return valor;
-                case RELATIVO:
+                case ValueType.RELATIVE:
                     return actual + valor;
                 default:
-                    throw new Exception("Tipo de valor desconocido " + tipoValor);
+                    throw new Exception("Tipo de valor no soportado: " + tipoValor);
             }
         }
-        protected static int comprobarTipoValor(String valor)
+        protected static ValueType comprobarTipoValor(String valor)
         {
             //Comprobamos los signos del valor
             switch (valor[0])
             {
                 case '+':
                 case '-':
-                    return RELATIVO;
+                    return ValueType.RELATIVE;
             }
 
-            return ABSOLUTO;
-        }
-
-        protected static NumberType comprobarTipoNumero(String numero) {
-            if(numero[numero.Length - 1] == '%'){
-                return NumberType.PERCENTAGE;
+            if (valor[valor.Length - 1] == '%')
+            {
+                return ValueType.PERCENTAGE;
             }
 
-            return NumberType.INTEGER;
+            return ValueType.ABSOLUTE;
         }
 
-        public enum NumberType { 
-            INTEGER,
-            PERCENTAGE
+        public enum ValueType {
+            FROZEN,
+            PERCENTAGE,
+            RELATIVE,
+            ABSOLUTE,
+        }
+
+        public enum Directions { 
+            TOP,BOTTOM,LEFT,RIGHT, NONE
         }
     }
 }

@@ -9,13 +9,14 @@ using System.Xml.Linq;
 
 namespace AnimacionesWF
 {
-    public class PasoPosicion : Paso
+    [XMLTagName("pos")]
+    public class AnimationModulePosition : AnimationModule
     {
         public int X;
         public int Y;
 
-        public int TipoY;
-        public int TipoX;
+        public ValueType TipoY;
+        public ValueType TipoX;
 
         public AdjustInfo adjustInfo;
 
@@ -31,9 +32,32 @@ namespace AnimacionesWF
         private int objetivoX;
         private int objetivoY;
 
-        public PasoPosicion(XElement elemento)
+
+        public AnimationModulePosition(XElement elemento) : base(elemento)
         {
-            parseXML(elemento);
+            //Attr
+            if (elemento.Attribute("adjust") != null)
+            {
+                adjustInfo = new AdjustInfo(elemento.Attribute("adjust").Value);
+            }
+
+            //Childs
+            foreach (XElement elementoHijo in elemento.Elements())
+            {
+                switch (elementoHijo.Name.LocalName.ToLower())
+                {
+                    case "x":
+                        TipoX = comprobarTipoValor(elementoHijo.Value);
+                        X = Int32.Parse(elementoHijo.Value);
+                        break;
+                    case "y":
+                        TipoY = comprobarTipoValor(elementoHijo.Value);
+                        Y = Int32.Parse(elementoHijo.Value);
+                        break;
+                    default:
+                        throw new Exception("ChildNode no soportado " + elementoHijo.Name.LocalName);
+                }
+            }
         }
 
         public override void prepare(Control control, int nMovimientos)
@@ -47,7 +71,7 @@ namespace AnimacionesWF
 
 
                 //Control
-                if (adjustInfo.TipoControlX == NumberType.PERCENTAGE)
+                if (adjustInfo.TipoControlX == ValueType.PERCENTAGE)
                 {
                     adjustControlX = control.Size.Width * adjustInfo.ControlX / 100;
                 }
@@ -55,7 +79,7 @@ namespace AnimacionesWF
                     adjustControlX = adjustInfo.ControlX;
                 }
 
-                if (adjustInfo.TipoControlY == NumberType.PERCENTAGE)
+                if (adjustInfo.TipoControlY == ValueType.PERCENTAGE)
                 {
                     adjustControlY = control.Size.Height * adjustInfo.ControlY / 100;
                 }
@@ -75,7 +99,7 @@ namespace AnimacionesWF
                     parentSize = control.Parent.Size;
                 }
 
-                if (adjustInfo.TipoParentX == NumberType.PERCENTAGE)
+                if (adjustInfo.TipoParentX == ValueType.PERCENTAGE)
                 {
                     adjustParentX = parentSize.Width * adjustInfo.ParentX / 100;
                 }
@@ -83,7 +107,7 @@ namespace AnimacionesWF
                     adjustParentX = adjustInfo.ParentX;
                 }
 
-                if (adjustInfo.TipoParentY == NumberType.PERCENTAGE)
+                if (adjustInfo.TipoParentY == ValueType.PERCENTAGE)
                 {
                     adjustParentY = parentSize.Height * adjustInfo.ParentY / 100;
                 }
@@ -143,62 +167,33 @@ namespace AnimacionesWF
             return false;
         }
 
-
-        /// <summary>
-        /// Depe
-        /// </summary>
-        /// <param name="elemento"></param>
-        public override void parseXML(XElement elemento)
-        {
-            //Attr
-            if (elemento.Attribute("adjust") != null) {
-                adjustInfo = new AdjustInfo(elemento.Attribute("adjust").Value);
-            }
-
-            //Childs
-            foreach (XElement elementoHijo in elemento.Elements()) {
-                switch (elementoHijo.Name.LocalName.ToLower()) {
-                    case "x":
-                        TipoX = comprobarTipoValor(elementoHijo.Value);
-                        X = Int32.Parse(elementoHijo.Value);
-                        break;
-                    case "y":
-                        TipoY = comprobarTipoValor(elementoHijo.Value);
-                        Y = Int32.Parse(elementoHijo.Value);
-                        break;
-                    default:
-                        throw new Exception("ChildNode no soportado " + elementoHijo.Name.LocalName);
-                }
-            }
-        }
-
         public class AdjustInfo {
             public int ControlX, ControlY, ParentX, ParentY;
-            public NumberType TipoControlX, TipoControlY, TipoParentX, TipoParentY;
+            public ValueType TipoControlX, TipoControlY, TipoParentX, TipoParentY;
             public bool adjustToForm;
 
             public AdjustInfo(String adjust) {
                 String[] adjustParams = adjust.Split(' ');
 
-                TipoControlX = comprobarTipoNumero(adjustParams[0]);
-                if (TipoControlX == NumberType.PERCENTAGE) {
+                TipoControlX = comprobarTipoValor(adjustParams[0]);
+                if (TipoControlX == ValueType.PERCENTAGE) {
                     ControlX = Int32.Parse(adjustParams[0].Substring(0, adjustParams[0].Length - 1));
                 }
 
-                TipoControlY = comprobarTipoNumero(adjustParams[1]);
-                if (TipoControlY == NumberType.PERCENTAGE)
+                TipoControlY = comprobarTipoValor(adjustParams[1]);
+                if (TipoControlY == ValueType.PERCENTAGE)
                 {
                     ControlY = Int32.Parse(adjustParams[1].Substring(0, adjustParams[1].Length - 1));
                 }
 
-                TipoParentX = comprobarTipoNumero(adjustParams[2]);
-                if (TipoParentX == NumberType.PERCENTAGE)
+                TipoParentX = comprobarTipoValor(adjustParams[2]);
+                if (TipoParentX == ValueType.PERCENTAGE)
                 {
                     ParentX = Int32.Parse(adjustParams[2].Substring(0, adjustParams[2].Length - 1));
                 }
 
-                TipoParentY = comprobarTipoNumero(adjustParams[3]);
-                if (TipoParentY == NumberType.PERCENTAGE)
+                TipoParentY = comprobarTipoValor(adjustParams[3]);
+                if (TipoParentY == ValueType.PERCENTAGE)
                 {
                     ParentY = Int32.Parse(adjustParams[3].Substring(0, adjustParams[3].Length - 1));
                 }

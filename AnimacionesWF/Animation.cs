@@ -9,11 +9,11 @@ using System.Xml.Linq;
 
 namespace AnimacionesWF
 {
-    public class Animacion
+    public class Animation
     {
         private const int TIMER_INTERVAL_DEFAULT = 55;
 		
-		//Eventos
+		//Events
         public event Action FinAnimacion;
 
         //Propiedades
@@ -23,7 +23,7 @@ namespace AnimacionesWF
 
         private Timer Timer;
 
-        private List<GrupoPasos> Pasos;
+        private List<ModulesGroup> ModulesGroup;
 
         private Control control;
         private int repeticiones;
@@ -35,15 +35,75 @@ namespace AnimacionesWF
         public event Action<String> OnEndSignal;
         public event Action<String> OnStartSignal;
 
-        public Animacion()
+        //Parser
+        private static Dictionary<String, Type> _modules;
+        private static Dictionary<String, Type> modules
         {
-            
+            get
+            {
+                if (_modules == null)
+                {
+                    _modules = new Dictionary<string, Type>();
+
+                    //Built-in modules
+                    RegisterAnimationModule(typeof(AnimationModulePosition));
+                    RegisterAnimationModule(typeof(AnimationModuleSize));
+
+                }
+                return _modules;
+            }
         }
 
-        public Animacion(XElement elemento, Control control): this()
+        public static AnimationModule InstanceNewModule(String XMLTagName, XElement root)
+        {
+            if (!modules.Keys.Contains(XMLTagName)) {
+                throw new Exception("Tag de module desconocido. Asegurate de registrar antes el modulo en la clase Animation");
+            }
+            return (AnimationModule)Activator.CreateInstance(modules[XMLTagName], root);
+        }
+
+        //Modules
+        public static void RegisterAnimationModule(AnimationModule module)
+        {
+            RegisterAnimationModule(module.GetType());
+        }
+
+        public static void RegisterAnimationModule(Type module)
+        {
+            String tagName = null;
+
+            if (!typeof(AnimationModule).IsAssignableFrom(module)) {
+                throw new Exception("El tipo pasado no hereda de la clase AnimationModule");
+            }
+
+            foreach (object o in module.GetCustomAttributes(true))
+            {
+                if (o.GetType().Equals(typeof(XMLTagNameAttribute)))
+                {
+                    tagName = ((XMLTagNameAttribute)o).XMLTagName;
+                    break;
+                }
+            }
+            if (tagName == null)
+            {
+                throw new Exception("El modulo no contiene el atributo [XMLTagName()] definido. Por favor, definelo");
+            }
+
+            try
+            {
+                modules.Add(tagName, module);
+            }
+            catch (ArgumentException e)
+            {
+                throw new Exception("Ya existe un modulo registrado con el tag: " + tagName);
+            }
+        }
+
+
+        public Animation(XElement elemento, Control control)
         {
             this.Timer = new Timer();
-            this.Pasos = new List<GrupoPasos>();
+            this.ModulesGroup = new List<ModulesGroup>();
             this.Timer.Tick += Tick;
             Timer.Interval = TIMER_INTERVAL_DEFAULT;
             this.control = control;
@@ -54,7 +114,7 @@ namespace AnimacionesWF
             foreach (XElement elementoHijo in elemento.Elements()) {
                 switch (elementoHijo.Name.LocalName) {
                     case "key-step":
-                        Pasos.Add(new GrupoPasos(elementoHijo));
+                        ModulesGroup.Add(new ModulesGroup(elementoHijo));
                         break;
                     default:
                         throw new Exception("Etiqueta no soportada " + elementoHijo.Name);
@@ -62,13 +122,12 @@ namespace AnimacionesWF
             }
         }
 
-        public Animacion(XElement elemento) : this()
+        public Animation(XElement elemento)
         {
             this.Timer = new Timer();
-            this.Pasos = new List<GrupoPasos>();
+            this.ModulesGroup = new List<ModulesGroup>();
             this.Timer.Tick += Tick;
             Timer.Interval = TIMER_INTERVAL_DEFAULT;
-            this.control = control;
 
             //Parse XML
             Nombre = elemento.Attribute("name") == null ? "undefined" : elemento.Attribute("name").Value;
@@ -78,7 +137,7 @@ namespace AnimacionesWF
                 switch (elementoHijo.Name.LocalName)
                 {
                     case "key-step":
-                        Pasos.Add(new GrupoPasos(elementoHijo));
+                        ModulesGroup.Add(new ModulesGroup(elementoHijo));
                         break;
                     default:
                         throw new Exception("Etiqueta no soportada " + elementoHijo.Name);
@@ -96,8 +155,8 @@ namespace AnimacionesWF
                 isPlaying = true;
                 this.control = control;
 
-                Pasos[pasosReproducidos].prepare(control, Timer.Interval);
-                sendSignal(Pasos[pasosReproducidos].StartSignal, OnStartSignal);
+                ModulesGroup[pasosReproducidos].prepare(control, Timer.Interval);
+                sendSignal(ModulesGroup[pasosReproducidos].StartSignal, OnStartSignal);
 
                 //Empezamos el timer
                 Timer.Enabled = true;
@@ -109,25 +168,25 @@ namespace AnimacionesWF
             Timer.Enabled = false;
 
             //Loops de los grupos
-            if (repeticiones != Pasos[pasosReproducidos].Repeticiones) {
+            if (repeticiones != ModulesGroup[pasosReproducidos].Repeticiones) {
                 repeticiones++;
-                Pasos[pasosReproducidos].prepare(control, Timer.Interval);
+                ModulesGroup[pasosReproducidos].prepare(control, Timer.Interval);
                 Timer.Enabled = true;
                 return;
             }
 
             //Si es el final
-            sendSignal(Pasos[pasosReproducidos].EndSignal, OnEndSignal);
+            sendSignal(ModulesGroup[pasosReproducidos].EndSignal, OnEndSignal);
 
             pasosReproducidos++;
 
             repeticiones = 0;
 
             //Comprobamos si ya hemos acabado todos los grupos
-            if (pasosReproducidos != Pasos.Count)
+            if (pasosReproducidos != ModulesGroup.Count)
             {
-                Pasos[pasosReproducidos].prepare(control, Timer.Interval);
-                sendSignal(Pasos[pasosReproducidos].StartSignal, OnStartSignal);
+                ModulesGroup[pasosReproducidos].prepare(control, Timer.Interval);
+                sendSignal(ModulesGroup[pasosReproducidos].StartSignal, OnStartSignal);
                 Timer.Enabled = true;
             }
             else {
@@ -141,8 +200,8 @@ namespace AnimacionesWF
         {
             bool finPasos = true;
 
-            foreach (Paso paso in Pasos[pasosReproducidos].Pasos) {
-                finPasos = paso.setpForward(control);
+            foreach (AnimationModule module in ModulesGroup[pasosReproducidos].Animations) {
+                finPasos = module.setpForward(control);
             }
 
             if (finPasos) {

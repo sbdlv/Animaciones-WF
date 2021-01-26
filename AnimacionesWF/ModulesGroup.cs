@@ -9,10 +9,10 @@ using System.Xml.Linq;
 
 namespace AnimacionesWF
 {
-    public class GrupoPasos : IEnumerator
+    public class ModulesGroup : IEnumerator
     {
         public int Ms;
-        public List<Paso> Pasos;
+        public List<AnimationModule> Animations;
         private int puntero;
         public String StartSignal;
         public String EndSignal;
@@ -20,7 +20,7 @@ namespace AnimacionesWF
 
 
 
-        public GrupoPasos(XElement elemento) : this(0)
+        public ModulesGroup(XElement elemento) : this(0)
         {
             Ms = Int32.Parse(elemento.Attribute("ms").Value);
             Repeticiones = elemento.Attribute("loops") == null ? 0 : Int32.Parse(elemento.Attribute("loops").Value);
@@ -30,36 +30,24 @@ namespace AnimacionesWF
             //Parseamos los pasos que tiene el grupo
             foreach (XElement elementoHijo in elemento.Elements())
             {
-                switch (elementoHijo.Name.LocalName)
-                {
-                    case "pos":
-                        Pasos.Add(new PasoPosicion(elementoHijo));
-                        break;
-                    case "size":
-                        Pasos.Add(new PasoSize(elementoHijo));
-                        break;
-                    case "circle":
-                        Pasos.Add(new PasoCircular(elementoHijo));
-                        break;
-                    default:
-                        throw new Exception("Paso no soportado " + elementoHijo.Name);
-                }
+                //Cargamos de la clase Animacion el modulo segun su tagname
+                Animations.Add(Animation.InstanceNewModule(elementoHijo.Name.LocalName, elementoHijo));
             }
         }
 
-        public GrupoPasos(int ms, List<Paso> pasos)
+        public ModulesGroup(int ms, List<AnimationModule> pasos)
         {
             Ms = ms;
-            this.Pasos = pasos;
+            this.Animations = pasos;
             puntero = 0;
         }
 
-        public GrupoPasos(int ms) : this(ms, new List<Paso>()){}
+        public ModulesGroup(int ms) : this(ms, new List<AnimationModule>()){}
 
         public bool MoveNext()
         {
             puntero++;
-            return puntero < Pasos.Count;
+            return puntero < Animations.Count;
         }
 
         public void Reset()
@@ -71,14 +59,14 @@ namespace AnimacionesWF
         {
             get
             {
-                return Pasos[puntero];
+                return Animations[puntero];
             }
         }
 
         public void prepare(Control control, int interval) {
             int nMovimientos = Ms / interval;
 
-            foreach (Paso paso in Pasos)
+            foreach (AnimationModule paso in Animations)
             {
                 paso.prepare(control, nMovimientos);
             }
