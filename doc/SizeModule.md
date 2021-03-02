@@ -1,4 +1,4 @@
-# size
+# Size Module
 Tag: `<size>`
 
 Modifica el tamaño de un control.

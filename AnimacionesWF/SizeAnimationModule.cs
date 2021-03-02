@@ -10,7 +10,7 @@ using System.Xml.Linq;
 namespace AnimacionesWF
 {
     [XMLTagName("size")]
-    class AnimationModuleSize : AnimationModule
+    class SizeAnimationModule : AnimationModule
     {
         public static int NORMAL = 0, CENTER = 1, CENTER_X = 2, CENTER_Y = 3;
         public int Width;
@@ -34,7 +34,7 @@ namespace AnimacionesWF
         private int objetivoWidht;
         private int objetivoHeight;
 
-        public AnimationModuleSize(XElement root) : base(root)
+        public SizeAnimationModule(XElement root) : base(root)
         {
             //Default 
             CentrarX = false;
@@ -89,20 +89,18 @@ namespace AnimacionesWF
 
         }
 
-        public override bool setpForward(Control control)
+        public override void setpForward(Control control, int movimientoActual, int totalDeMovimientos)
         {
             int nuevoWidth, nuevoHeight, ajusteX = 0, ajusteY = 0, fixedSumaW = (int) sumaWidth, fixedSumaH = (int) sumaHeight;
-            if (finalizada) {
-                return finalizada;
-            }
 
-            if (Math.Round(pseudoWidth) == objetivoWidht && Math.Round(pseudoHeight) == objetivoHeight)
+
+            //Fix
+            if (movimientoActual == totalDeMovimientos)
             {
                 Console.WriteLine("From " + control.Size);
-                control.Size = new System.Drawing.Size(objetivoWidht, objetivoHeight);  //Fix
+                control.Size = new Size(objetivoWidht, objetivoHeight);
                 Console.WriteLine("To" + control.Size);
-                finalizada = true;
-                return finalizada;
+                return;
             }
 
 
@@ -151,8 +149,6 @@ namespace AnimacionesWF
             }
 
             Console.WriteLine("[Step]: " + control.Width + "    Division: " + ((int) sumaWidth / 2) + "\tPosX: " + control.Location.X);
-
-            return false;
         }
     }
 }

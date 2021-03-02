@@ -63,13 +63,21 @@ namespace AnimacionesWF
             }
         }
 
-        public void prepare(Control control, int interval) {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="control"></param>
+        /// <param name="interval"></param>
+        /// <returns>El N.Total de movimientos que se van a tener que realizar para finalizar el grupo</returns>
+        public int prepare(Control control, int interval) {
             int nMovimientos = Ms / interval;
 
             foreach (AnimationModule paso in Animations)
             {
                 paso.prepare(control, nMovimientos);
             }
+
+            return nMovimientos;
         }
     }
 }

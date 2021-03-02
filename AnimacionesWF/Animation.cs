@@ -27,6 +27,8 @@ namespace AnimacionesWF
 
         private Control control;
         private int repeticiones;
+        private int nMovimientoActual;
+        private int totalMovimientos;
 
         //Control
         private bool isPlaying;
@@ -46,8 +48,8 @@ namespace AnimacionesWF
                     _modules = new Dictionary<string, Type>();
 
                     //Built-in modules
-                    RegisterAnimationModule(typeof(AnimationModulePosition));
-                    RegisterAnimationModule(typeof(AnimationModuleSize));
+                    RegisterAnimationModule(typeof(PositionAnimationModule));
+                    RegisterAnimationModule(typeof(SizeAnimationModule));
 
                 }
                 return _modules;
@@ -73,7 +75,7 @@ namespace AnimacionesWF
             String tagName = null;
 
             if (!typeof(AnimationModule).IsAssignableFrom(module)) {
-                throw new Exception("El tipo pasado no hereda de la clase AnimationModule");
+                throw new ClassDoesNotInheritFromAnimationModuleException(module);
             }
 
             foreach (object o in module.GetCustomAttributes(true))
@@ -99,6 +101,7 @@ namespace AnimacionesWF
             }
         }
 
+        /*
 
         public Animation(XElement elemento, Control control)
         {
@@ -113,14 +116,14 @@ namespace AnimacionesWF
 
             foreach (XElement elementoHijo in elemento.Elements()) {
                 switch (elementoHijo.Name.LocalName) {
-                    case "key-step":
+                    case "group":
                         ModulesGroup.Add(new ModulesGroup(elementoHijo));
                         break;
                     default:
                         throw new Exception("Etiqueta no soportada " + elementoHijo.Name);
                 }
             }
-        }
+        }*/
 
         public Animation(XElement elemento)
         {
@@ -136,7 +139,7 @@ namespace AnimacionesWF
             {
                 switch (elementoHijo.Name.LocalName)
                 {
-                    case "key-step":
+                    case "group":
                         ModulesGroup.Add(new ModulesGroup(elementoHijo));
                         break;
                     default:
@@ -155,7 +158,9 @@ namespace AnimacionesWF
                 isPlaying = true;
                 this.control = control;
 
-                ModulesGroup[pasosReproducidos].prepare(control, Timer.Interval);
+                totalMovimientos = ModulesGroup[pasosReproducidos].prepare(control, Timer.Interval);
+                nMovimientoActual = 0;
+
                 sendSignal(ModulesGroup[pasosReproducidos].StartSignal, OnStartSignal);
 
                 //Empezamos el timer
@@ -170,27 +175,32 @@ namespace AnimacionesWF
             //Loops de los grupos
             if (repeticiones != ModulesGroup[pasosReproducidos].Repeticiones) {
                 repeticiones++;
-                ModulesGroup[pasosReproducidos].prepare(control, Timer.Interval);
+                totalMovimientos = ModulesGroup[pasosReproducidos].prepare(control, Timer.Interval);
                 Timer.Enabled = true;
                 return;
             }
+
+            
 
             //Si es el final
             sendSignal(ModulesGroup[pasosReproducidos].EndSignal, OnEndSignal);
 
             pasosReproducidos++;
 
+            //Reset vars
+            nMovimientoActual = 0;
             repeticiones = 0;
 
             //Comprobamos si ya hemos acabado todos los grupos
             if (pasosReproducidos != ModulesGroup.Count)
             {
-                ModulesGroup[pasosReproducidos].prepare(control, Timer.Interval);
+                totalMovimientos = ModulesGroup[pasosReproducidos].prepare(control, Timer.Interval);
+
                 sendSignal(ModulesGroup[pasosReproducidos].StartSignal, OnStartSignal);
                 Timer.Enabled = true;
             }
             else {
-                //Se han reproducido todos los pasos
+                //Se han reproducido todos los grupos
                 FinAnimacion?.Invoke();
                 Detener();
             }
@@ -198,13 +208,11 @@ namespace AnimacionesWF
 
         private void Tick(Object sender, EventArgs e)
         {
-            bool finPasos = true;
-
             foreach (AnimationModule module in ModulesGroup[pasosReproducidos].Animations) {
-                finPasos = module.setpForward(control);
+                module.setpForward(control, nMovimientoActual, totalMovimientos);
             }
 
-            if (finPasos) {
+            if (++nMovimientoActual == totalMovimientos) {
                 PasoAcabado();
             }
         }

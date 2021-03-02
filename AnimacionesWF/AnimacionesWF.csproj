@@ -44,10 +44,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Animation.cs" />
+    <Compile Include="Exceptions.cs" />
     <Compile Include="ModulesGroup.cs" />
     <Compile Include="AnimationModule.cs" />
-    <Compile Include="AnimationModulePosition.cs" />
-    <Compile Include="AnimationModuleSize.cs" />
+    <Compile Include="PositionAnimationModule.cs" />
+    <Compile Include="SizeAnimationModule.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="XMLTagNameAttribute.cs" />
   </ItemGroup>

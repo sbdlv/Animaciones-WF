@@ -10,7 +10,7 @@ using System.Xml.Linq;
 namespace AnimacionesWF
 {
     [XMLTagName("pos")]
-    public class AnimationModulePosition : AnimationModule
+    public class PositionAnimationModule : AnimationModule
     {
         public int X;
         public int Y;
@@ -33,7 +33,7 @@ namespace AnimacionesWF
         private int objetivoY;
 
 
-        public AnimationModulePosition(XElement elemento) : base(elemento)
+        public PositionAnimationModule(XElement elemento) : base(elemento)
         {
             //Attr
             if (elemento.Attribute("adjust") != null)
@@ -136,20 +136,15 @@ namespace AnimacionesWF
             //Console.WriteLine("Suma Y" + sumaY);
         }
 
-        public override bool setpForward(Control control)
+        public override void setpForward(Control control, int movimientoActual, int totalDeMovimientos)
         {
             int nuevaX, nuevaY;
 
-            if (finalizada) {
-                return finalizada;
-            }
-
-            if (Math.Round(pseudoX) == objetivoX && Math.Round(pseudoY) == objetivoY)
+            //Fix position in the last movement
+            if (movimientoActual == totalDeMovimientos)
             {
-                Console.WriteLine("Fin paso posicion");
                 control.Location = new Point(objetivoX, objetivoY); //Fix para divisiones y movimientos incompletos
-                finalizada = true;
-                return finalizada;
+                return;
             }
 
             pseudoX += sumaX;
@@ -162,9 +157,6 @@ namespace AnimacionesWF
             nuevaY = (int)pseudoY;
 
             control.Location = new Point(nuevaX, nuevaY);
-            //Console.WriteLine(nuevaX + "::" + nuevaY);
-
-            return false;
         }
 
         public class AdjustInfo {

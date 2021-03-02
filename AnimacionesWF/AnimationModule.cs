@@ -19,7 +19,7 @@ namespace AnimacionesWF
         /// Cambia los datos del control
         /// </summary>
         /// <returns>Trues si ya se ha acabado el paso</returns>
-        public abstract bool setpForward(Control control);
+        public abstract void setpForward(Control control, int movimientoActual, int totalDeMovimientos);
 
 
         /// <summary>

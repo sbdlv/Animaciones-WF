@@ -1,4 +1,4 @@
-# pos
+# Position Module
 Tag: `<pos>`
 
 Mueve la posicion de un control a los valores especificados.
