@@ -13,7 +13,7 @@ La jerarquia de nodos XML el al siguiente:
         ...
     </group>
     ...
-</animacion>
+</animation>
 ```
 # Tags XML
 ## \<animation>
