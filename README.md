@@ -3,7 +3,7 @@
 Da la posibilidad de crear animaciones para controles mediante XML.
 # Estructura XML
 La jerarquia de nodos XML el al siguiente:
-```
+```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <animation name="Basic structure">
     <group ms="0">
@@ -32,7 +32,7 @@ Un grupo contiene un conjunto de modulos. Los modulos que estén dentro de un gr
 | endSignal | String | No | "" | Invoca un evento al acabarse el grupo. El evento enviara un String con el valor que hayamos definido en el atrbituto. |
 
  ### Ejemplos
- ```
+ ```xml
 <group ms="2000" loops="1" startSignal="comienzo" endSignal="final">
     <pos>
         ...
@@ -49,7 +49,7 @@ AnimacionesWF ya viene incorporado con dos modulos para poder empezar a crear an
 
 ## Desarrollar modulos
 AnimacionesWF viene con una clase para que puedas crear tus propios modulos. Para ello, crea una clase que herede de `AnimationModule`, por ejemplo:
-```
+```c#
 public class PositionAnimationModule : AnimationModule{
     //...
 }
@@ -57,14 +57,14 @@ public class PositionAnimationModule : AnimationModule{
 
 ### XMLTagName
 Es importante definir con que nombre quieres que se reconozca tu modulo. Para ello, definimos el atributo encima de la declaración de la clase:
-```
+```c#
     [XMLTagName("pos")]
     public class PositionAnimationModule : AnimationModule
 ```
 
 ### Constructor
 Sera necesario crear un cosntructor que llama al base, el cual recibe un XElement, del cual parsearemos la información del nodo de nuestra animación
-```
+```c#
 public PositionAnimationModule(XElement root) : base(root)
 ```
 
