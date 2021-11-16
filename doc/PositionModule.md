@@ -76,13 +76,13 @@ adjust="0% 100% 0% 100% form"
        
 ```
 ## Ejemplos
-```
+```xml
 <pos>
     <x>+100</x>
     <y>200</y>
 </pos>
 ```
-```
+```xml
 <pos adjust="120 50% 0 0 form">
     <x>+200</x>
 </pos>
