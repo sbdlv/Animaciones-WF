@@ -11,7 +11,7 @@ Modifica el tamaño de un control.
     - center: Mantiene el control centrado a la vez que se hace resize.
 
 ## Ejemplos
-```
+```xml
 <size mode="normal">
     <w>+100</w>
     <h>55</h>
